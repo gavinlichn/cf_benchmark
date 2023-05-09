@@ -31,6 +31,7 @@ var cpuprofile = flag.String("cpuprofile", "", "write cpu profile `file`")
 var nproc = flag.Int("c", 0, "Number of threads")
 var duration = flag.Uint("t", 10, "Duration of each benchmark in seconds")
 var run = flag.String("r", ".*", "Tests to run")
+var iter = flag.Int("i", 1, "Iterations to run")
 
 type benchInit func() func()
 
@@ -346,9 +347,7 @@ func main() {
 		*nproc = 0
 	}
 
-	if *nproc != 0 {
-		runtime.GOMAXPROCS(*nproc)
-	} else {
+	if *nproc == 0 {
 		*nproc = runtime.GOMAXPROCS(0)
 	}
 
@@ -357,13 +356,14 @@ func main() {
 	match := regexp.MustCompile(*run)
 
 	for _, b := range goBenchmarks {
+		for i:=0; i<*iter; i++ {
 
-		if !match.MatchString(b.name) {
-			continue
+			if !match.MatchString(b.name) {
+				continue
+			}
+
+			totalMulti := bench(b.benc, *nproc)
+			fmt.Printf("%s,%s\n", b.name, b.report(totalMulti))
 		}
-
-		totalSingle := bench(b.benc, 1)
-		totalMulti := bench(b.benc, *nproc)
-		fmt.Printf("%s,%s,%s\n", b.name, b.report(totalSingle), b.report(totalMulti))
 	}
 }
