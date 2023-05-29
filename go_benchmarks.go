@@ -19,6 +19,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"runtime/trace"
 	"regexp"
 	"runtime"
 	"runtime/pprof"
@@ -28,6 +29,7 @@ import (
 )
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile `file`")
+var tracef = flag.String("trace", "", "write trace `file`")
 var nproc = flag.Int("c", 0, "Number of threads")
 var duration = flag.Uint("t", 10, "Duration of each benchmark in seconds")
 var run = flag.String("r", ".*", "Tests to run")
@@ -342,6 +344,11 @@ func main() {
 		}
 		defer pprof.StopCPUProfile()
 	}
+
+	tf, _ := os.Create(*tracef)
+	trace.Start(tf)
+	defer tf.Close()
+	defer trace.Stop()
 
 	if *nproc < 0 {
 		*nproc = 0
